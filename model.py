@@ -181,9 +181,14 @@ class GPT(nn.Module):
             x = block(x)
         x = self.transformer.ln_f(x)
 
+        print(f'idx.shape={idx.shape}')
+        print(f'Y.shape={targets.shape}')
+        print(f'x.shape={x.shape}')
         if targets is not None:
             # if we are given some desired targets also calculate the loss
             logits = self.lm_head(x)
+            print(f'forward: logits.shape={logits.shape}')
+            print(f'logits.view(-1, logits.size(-1)).shape={logits.view(-1, logits.size(-1)).shape}, argets.view(-1)={targets.view(-1).shape}')
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), ignore_index=-1)
         else:
             # inference-time mini-optimization: only forward the lm_head on the very last position
