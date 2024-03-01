@@ -2,6 +2,8 @@ import tushare as ts
 import os
 import pandas as pd
 from datetime import datetime, timedelta
+import numpy as np
+import pickle
 
 
 pro = ts.pro_api()
@@ -86,8 +88,41 @@ def create_input():
 
     print("Data successfully generated and saved to:", output_file_path)    
 
+def create_data():
+    file_input = "/home/ren/python/nanoGPT/data/stock/input.csv"
+    df = pd.read_csv(file_input)
+    df = df.iloc[:, 1:] # 不要第一列日期
+    
+    vocab_size = 1024
+    df = df.iloc[:, :vocab_size] #取前1024列数据
+
+    vocabs = df.columns.values
+    
+    stoi = { ch:i for i,ch in enumerate(vocabs)}
+    itos = { i:ch for i,ch in enumerate(vocabs)}
+    def encode(s):
+        return [stoi[c] for c in s]
+    def decode(l):
+        return ''.join([itos[i] for i in l])
+    
+    n = len(df)
+    train_data = df[:int(n*0.9)]
+    val_data = df[int(n*0.9):]
+    
+    np.array(train_data, dtype=np.float16).tofile(os.path.join(os.path.dirname(__file__), 'train.bin'))
+    np.array(val_data, dtype=np.float16).tofile(os.path.join(os.path.dirname(__file__), 'val.bin'))
+
+    meta = {
+        'vocab_size': vocab_size,
+        'itos': itos,
+        'stoi': stoi,
+    }
+    with open(os.path.join(os.path.dirname(__file__), 'meta.pkl'), 'wb') as f:
+        pickle.dump(meta, f)
+    
 
 # get_stocks()
 # get_daily()
 # create_input()  
+create_data()
 
