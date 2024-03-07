@@ -40,61 +40,30 @@ def get_daily():
         
         start_date += timedelta(days=1) 
 
-def create_input():
-    # Step 1: 读取股票文件A，获取list_date<20100101的股票数据，生成数据inputStocks
-    stock_file_path = "/home/ren/python/nanoGPT/data/stock/stock.csv"
-    input_stocks = pd.read_csv(stock_file_path)
-    input_stocks = input_stocks[input_stocks['list_date'] < 20100101][:]
-    print(input_stocks)
+def get_qfq_daily():
+    stocks = pd.read_csv(file_stocks)
+    stocks = stocks[stocks['list_date'] < 20100101]
+    
+    folder_detail = os.path.join(os.path.dirname(__file__), 'qfq')
+    os.makedirs(folder_detail, exist_ok=True)
 
-    # Step 2: 读取文件夹B，获取所有日期文件C
-    detail_folder_path = "/home/ren/python/nanoGPT/data/stock/detail"
-    detail_files = os.listdir(detail_folder_path)
-
-    # Step 3: 根据ts_code，合并inputStocks和日期文件C，生成文件D
-    output_data = {}
-
-    for detail_file in detail_files[:]:
-        date = detail_file.split(".")[0]
-        detail_file_path = os.path.join(detail_folder_path, detail_file)
-        detail_data = pd.read_csv(detail_file_path)
-
-        merged_data = pd.merge(input_stocks, detail_data, on='ts_code', how='inner')
-        merged_data = merged_data[['trade_date', 'ts_code', 'pct_chg']]
-
-        for index, row in merged_data.iterrows():
-            ts_code = row['ts_code']
-            pct_chg = row['pct_chg']
-            if date not in output_data:
-                output_data[date] = {}
-            if ts_code not in output_data[date]:
-                output_data[date][ts_code] = pct_chg
-
-    # Convert output_data to DataFrame
-    output_df = pd.DataFrame.from_dict(output_data, orient='index')
-    output_df.index.name = 'trade_date'
-
-    # Sort DataFrame by trade_date
-    output_df.sort_index(inplace=True)
-
-    # Fill NaN values with 1e-6
-    output_df.fillna(1e-4, inplace=True)
-
-    print(output_df)
-
-    # Write to output file
-    output_file_path = "/home/ren/python/nanoGPT/data/stock/input.csv"
-    output_df.to_csv(output_file_path)
-
-    print("Data successfully generated and saved to:", output_file_path)    
+    for _, row in stocks.iterrows():
+        print(row)
+        code = row['ts_code']
+        file_code = os.path.join(folder_detail, f'{code}.csv')
+        if not os.path.exists(file_code):
+            df = ts.pro_bar(ts_code=code, adj='qfq', start_date='20100101')
+            df.to_csv(file_code, index=False)
+            
+     
 
 def create_data():
-    file_input = "/home/ren/python/nanoGPT/data/stock/input.csv"
+    file_input = os.path.join(os.path.dirname(__file__), 'input.csv')
     df = pd.read_csv(file_input)
-    df = df.iloc[:, 1:] # 不要第一列日期
+    # df = df.iloc[:, 1:] # 不要第一列日期
     
-    vocab_size = 1024
-    df = df.iloc[:, :vocab_size] #取前1024列数据
+    # vocab_size = 1024
+    # df = df.iloc[:, :vocab_size] #取前1024列数据
 
     vocabs = df.columns.values
     
@@ -105,6 +74,10 @@ def create_data():
     def decode(l):
         return ''.join([itos[i] for i in l])
     
+    print(np.argmax(df))
+    problematic_value = df[np.argmax(df)]
+    print(problematic_value)
+
     n = len(df)
     train_data = df[:int(n*0.9)]
     val_data = df[int(n*0.9):]
@@ -113,7 +86,7 @@ def create_data():
     np.array(val_data, dtype=np.float16).tofile(os.path.join(os.path.dirname(__file__), 'val.bin'))
 
     meta = {
-        'vocab_size': vocab_size,
+        'vocab_size': 1024,
         'itos': itos,
         'stoi': stoi,
     }
@@ -121,8 +94,42 @@ def create_data():
         pickle.dump(meta, f)
     
 
+
+
+def create_input():     
+    # 定义输入文件夹路径
+    folder_path = os.path.join(os.path.dirname(__file__), 'qfq')
+
+    # 初始化一个空的DataFrame来存储结果
+    result_df = pd.DataFrame(columns=["trade_date", "ts_code", "close", "close_chg", "amount", "amount_chg"])
+
+    # 遍历文件夹中的所有文件
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".csv") and '.' in filename:
+            file_path = os.path.join(folder_path, filename)
+
+            # 读取股票内容文件为DataFrame
+            stock_df = pd.read_csv(file_path)
+
+            # 计算股价涨幅和交易额涨幅
+            stock_df["close_chg"] = (stock_df["close"] / stock_df["close"].shift(-1)).round(4)
+            stock_df["amount_chg"] = (stock_df["amount"] / stock_df["amount"].shift(-1)).round(4)
+
+            # 处理除以0的情况
+            stock_df.loc[stock_df["close"].shift(1) == 0, "close_chg"] = 0
+            stock_df.loc[stock_df["amount"].shift(1) == 0, "amount_chg"] = 0
+
+            # 提取所需的列，并将结果追加到result_df中
+            result_df = pd.concat([result_df, stock_df[["trade_date", "ts_code", "close", "close_chg", "amount", "amount_chg"]]])
+
+    # 保存结果到input.csv文件
+    result_df.to_csv(os.path.join(os.path.dirname(__file__), 'input.csv'), index=False)
+
+
 # get_stocks()
 # get_daily()
-# create_input()  
-create_data()
+create_input()  
+# create_data()
+# get_qfq_daily()
+    
 
