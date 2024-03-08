@@ -9,3 +9,5 @@ __pycache__/
 *.pyc
 input.txt
 *.csv
+qfq/
+detail/

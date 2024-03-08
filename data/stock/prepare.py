@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
-import pickle
+import json
 
 
 pro = ts.pro_api()
@@ -87,15 +87,16 @@ def create_ml_data():
     def encode(s):
         return [stoi[c] for c in s]
     def decode(l):
-        return ''.join([itos[i] for i in l])
+        return ','.join([itos[i] for i in l])
     
     meta = {
         'vocab_size': size,
         'itos': itos,
         'stoi': stoi,
     }
-    with open(os.path.join(os.path.dirname(__file__), 'meta.pkl'), 'wb') as f:
-        pickle.dump(meta, f)
+    # 将meta字典写入JSON文件
+    with open(os.path.join(os.path.dirname(__file__), 'meta.pkl'), "w") as f:
+        json.dump(meta, f)
 
     # 3. 生成训练和测试数据
     # 3.1 生成全部数据
