@@ -133,11 +133,7 @@ def create_ml_data():
 
     # 3.2 分割数据，成train和val
     n = len(output_data)
-    train_data = output_data[:int(n*0.9)]
-    val_data = output_data[int(n*0.9):]
-
-    train_data.to_csv(os.path.join(os.path.dirname(__file__), 'train.csv'), index=False)
-    val_data.to_csv(os.path.join(os.path.dirname(__file__), 'val.csv'), index=False)
+    output_data.to_csv(os.path.join(os.path.dirname(__file__), 'train.csv'), index=False)
     
 
    
