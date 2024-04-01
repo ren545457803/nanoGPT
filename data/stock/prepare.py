@@ -142,8 +142,8 @@ def create_ml_data():
 
    
 
-print()
-# get_stocks()
-# get_qfq_daily()
+print('开始')
+get_stocks()
+get_qfq_daily()
 create_ml_data()
 
