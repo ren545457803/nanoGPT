@@ -134,12 +134,43 @@ def create_ml_data():
     # 3.2 分割数据，成train和val
     n = len(output_data)
     output_data.to_csv(os.path.join(os.path.dirname(__file__), 'train.csv'), index=False)
-    
 
+def fill_none(pd_data, default):
+    # 设置 future.no_silent_downcasting 选项
+    pd.set_option('future.no_silent_downcasting', True)
+    # 使用 .fillna() 的替代方法
+    result = pd_data.fillna(default)
+    result = result.infer_objects(copy=False)
+    return result
+
+def get_real_time():
+    stocks = get_train_stock()
+    stocks.insert(0, 'trade_date')
+    resutl = pd.DataFrame(columns=stocks)
+
+    from datetime import datetime
+    trade_date = datetime.now().strftime('%Y%m%d')
+    resutl.loc[0, 'trade_date'] = trade_date
+
+    import easyquotation
+    quotation = easyquotation.use('tencent') # 新浪 ['sina'] 腾讯 ['tencent', 'qq'] 
+    data_real = quotation.stocks([code[:-3] for code in stocks[1:]])
+    for stock in stocks[1:]:
+        code = stock[:-3]
+        
+        close_chg = chg_default
+        info = data_real.get(code, '')
+        if len(info) > 1:
+            close_chg = round(1 + float(info['涨跌(%)']) / 100, 4)
+        resutl.loc[0, stock] = close_chg
+
+    resutl = fill_none(resutl, chg_default)
+    resutl.to_csv(os.path.join(os.path.dirname(__file__), f'real_time_{trade_date}.csv' ))
+    
    
 
 print('开始')
-get_stocks()
-get_qfq_daily()
-create_ml_data()
-
+# get_stocks()
+# get_qfq_daily()
+# create_ml_data()
+get_real_time()
