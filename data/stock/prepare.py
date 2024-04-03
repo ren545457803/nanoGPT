@@ -137,7 +137,7 @@ def create_ml_data():
 
 def fill_none(pd_data, default):
     # 设置 future.no_silent_downcasting 选项
-    # pd.set_option('future.no_silent_downcasting', True)
+    pd.set_option('future.no_silent_downcasting', True)
     # 使用 .fillna() 的替代方法
     result = pd_data.fillna(default)
     result = result.infer_objects(copy=False)
