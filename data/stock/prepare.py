@@ -163,7 +163,7 @@ def get_real_time():
         resutl.loc[0, stock] = close_chg
 
     resutl = fill_none(resutl, chg_default)
-    resutl.to_csv(os.path.join(os.path.dirname(__file__), f'real_time_{trade_date}.csv' ))
+    resutl.to_csv(os.path.join(os.path.dirname(__file__), f'real_time_{trade_date}.csv' ), index=False)
     
    
 
