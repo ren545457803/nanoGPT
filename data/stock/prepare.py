@@ -24,25 +24,23 @@ def get_stocks():
 
 def get_train_stock():
     stocks = pd.read_csv(file_stocks)
-    stocks = list(stocks[stocks['list_date'] < 20300101][:].iloc[:,0])
+    stocks = list(stocks[stocks['list_date'] < 20210101][:].iloc[:,0])
     stocks = [stock for stock in stocks if stock.endswith('.SH') or stock.endswith('.SZ')]
     print(len(stocks))
     return stocks
 
 def get_qfq_daily():
-    stocks = pd.read_csv(file_stocks)
-    stocks = stocks[stocks['list_date'] < 20300101]
+    stocks = get_train_stock()
     
     folder_detail = os.path.join(os.path.dirname(__file__), 'qfq')
     os.makedirs(folder_detail, exist_ok=True)
 
-    for _, row in stocks.iterrows():
+    for code in stocks:
         # print(row)
-        code = row['ts_code']
         file_code = os.path.join(folder_detail, f'{code}.csv')
         if not os.path.exists(file_code):
             time.sleep(0.3)
-            df = ts.pro_bar(ts_code=code, adj='qfq', start_date='20230101')
+            df = ts.pro_bar(ts_code=code, adj='qfq', start_date='20210101')
             df.to_csv(file_code, index=False)
 
 
@@ -174,3 +172,4 @@ print('开始')
 # get_qfq_daily()
 # create_ml_data()
 get_real_time()
+
