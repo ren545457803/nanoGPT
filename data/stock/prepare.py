@@ -24,7 +24,7 @@ def get_stocks():
 
 def get_train_stock():
     stocks = pd.read_csv(file_stocks)
-    stocks = list(stocks[stocks['list_date'] < 20210101][:].iloc[:,0])
+    stocks = list(stocks[stocks['list_date'] < 20310101][:].iloc[:,0])
     stocks = [stock for stock in stocks if stock.endswith('.SH') or stock.endswith('.SZ')]
     print(len(stocks))
     return stocks
